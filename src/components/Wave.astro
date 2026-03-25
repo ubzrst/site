@@ -1,0 +1,72 @@
+---
+
+---
+
+<pre id="wave" aria-hidden="true"></pre>
+
+<style>
+    #wave {
+        font-family: monospace;
+        font-size: 14px;
+        color: var(--muted);
+        line-height: 1.4;
+        user-select: none;
+    }
+</style>
+
+<script>
+    const frames = [
+        {
+            art: `                        \n~~~~~~~~~~~~~~~~~~~~~~~~`,
+            delay: 2500,
+        },
+        {
+            art: `           _            \n~~~~~~~~~~/ \\~~~~~~~~~~~`,
+            delay: 500,
+        },
+        {
+            art: `          /~\\           \n~~~~~~~~~'   \`~~~~~~~~~~`,
+            delay: 500,
+        },
+        {
+            art: `         /~~~\\          \n~~~~~~~~'     \`~~~~~~~~~`,
+            delay: 500,
+        },
+        {
+            art: `        /~~~~~\\         \n~~~~~~~'       \`~~~~~~~~`,
+            delay: 700,
+        },
+        {
+            art: `       /~~~~~~~\\~       \n~~~~~~'          \`~~~~~~`,
+            delay: 300,
+        },
+        {
+            art: `      /~~~~~~~~~~\\~~~   \n~~~~~'               \`~~`,
+            delay: 200,
+        },
+        {
+            art: `~~~~~~~~~~~~~~~~~~~~~~~~\n~~~~~~~~~~~~~~~~~~~~~~~~`,
+            delay: 400,
+        },
+        {
+            art: `  ~   ~   ~   ~   ~     \n~~~~~~~~~~~~~~~~~~~~~~~~`,
+            delay: 800,
+        },
+        {
+            art: `                        \n~~~~~~~~~~~~~~~~~~~~~~~~`,
+            delay: 2500,
+        },
+    ];
+
+    const el = document.getElementById("wave")!;
+    let index = 0;
+
+    function next() {
+        const frame = frames[index];
+        el.textContent = frame.art;
+        index = (index + 1) % frames.length;
+        setTimeout(next, frame.delay);
+    }
+
+    next();
+</script>

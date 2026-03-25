@@ -1,0 +1,182 @@
+---
+
+---
+
+<pre id="tesseract" aria-hidden="true"></pre>
+
+<style>
+    #tesseract {
+        font-family: monospace;
+        font-size: 0.22em;
+        font-weight: bold;
+        line-height: 1.35;
+        color: var(--extreme));
+        user-select: none;
+        letter-spacing: 0.05em;
+    }
+</style>
+
+<script>
+    const W = 60,
+        H = 30;
+    const cx = W / 2,
+        cy = H / 2;
+    const SCALE = 7.5;
+    const D4 = 4; // 4D -> 3D perspective distance
+    const D3 = 7; // 3D -> 2D perspective distance
+
+    // 16 vertices of a tesseract: all (±1, ±1, ±1, ±1)
+    type V4 = [number, number, number, number];
+    type V3 = [number, number, number];
+    type V2 = [number, number];
+
+    const verts: V4[] = [];
+    for (const x of [-1, 1])
+        for (const y of [-1, 1])
+            for (const z of [-1, 1])
+                for (const w of [-1, 1]) verts.push([x, y, z, w]);
+
+    // 32 edges: vertices that differ in exactly one coordinate
+    const edges: [number, number][] = [];
+    for (let i = 0; i < 16; i++)
+        for (let j = i + 1; j < 16; j++) {
+            let diffs = 0;
+            for (let k = 0; k < 4; k++)
+                if (verts[i][k] !== verts[j][k]) diffs++;
+            if (diffs === 1) edges.push([i, j]);
+        }
+
+    const cos = Math.cos,
+        sin = Math.sin;
+
+    function rotXW(v: V4, a: number): V4 {
+        const [x, y, z, w] = v;
+        return [x * cos(a) - w * sin(a), y, z, x * sin(a) + w * cos(a)];
+    }
+
+    function rotZW(v: V4, a: number): V4 {
+        const [x, y, z, w] = v;
+        return [x, y, z * cos(a) - w * sin(a), z * sin(a) + w * cos(a)];
+    }
+
+    function rotXY(v: V4, a: number): V4 {
+        const [x, y, z, w] = v;
+        return [x * cos(a) - y * sin(a), x * sin(a) + y * cos(a), z, w];
+    }
+
+    function project4to3(v: V4): V3 {
+        const [x, y, z, w] = v;
+        const f = D4 / (D4 - w);
+        return [x * f, y * f, z * f];
+    }
+
+    function project3to2(v: V3): V2 {
+        const [x, y, z] = v;
+        const f = D3 / (D3 + z + 2);
+        return [
+            Math.round(cx + x * SCALE * f * 2.1),
+            Math.round(cy + y * SCALE * f),
+        ];
+    }
+
+    function edgeChar(x0: number, y0: number, x1: number, y1: number): string {
+        const dx = x1 - x0,
+            dy = y1 - y0;
+        if (dy === 0) return "-";
+        if (dx === 0) return "|";
+        const s = Math.abs(dy) / Math.abs(dx);
+        if (s < 0.35) return "-";
+        if (s > 2.8) return "|";
+        return dx > 0 === dy > 0 ? "\\" : "/";
+    }
+
+    function vertChar(z3: number): string {
+        if (z3 > 1.2) return "+";
+        if (z3 > 0) return "*";
+        if (z3 > -1.2) return "o";
+        return "·";
+    }
+
+    function drawLine(
+        grid: string[][],
+        fg: number[][],
+        x0: number,
+        y0: number,
+        x1: number,
+        y1: number,
+        ch: string,
+        depth: number,
+    ) {
+        const dx = Math.abs(x1 - x0),
+            dy = Math.abs(y1 - y0);
+        const sx = x0 < x1 ? 1 : -1,
+            sy = y0 < y1 ? 1 : -1;
+        let err = dx - dy;
+        let px = x0,
+            py = y0;
+        while (true) {
+            if (px >= 0 && px < W && py >= 0 && py < H) {
+                if (depth > fg[py][px]) {
+                    grid[py][px] = ch;
+                    fg[py][px] = depth;
+                }
+            }
+            if (px === x1 && py === y1) break;
+            const e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                px += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                py += sy;
+            }
+        }
+    }
+
+    const el = document.getElementById("tesseract")!;
+    let axw = 0,
+        azw = 0,
+        axy = 0;
+
+    function frame() {
+        const grid: string[][] = Array.from({ length: H }, () =>
+            Array(W).fill(" "),
+        );
+        const fg: number[][] = Array.from({ length: H }, () =>
+            Array(W).fill(-Infinity),
+        );
+
+        const pts3 = verts
+            .map((v) => rotXY(rotZW(rotXW(v, axw), azw), axy))
+            .map(project4to3);
+
+        const pts2 = pts3.map(project3to2);
+
+        for (const [a, b] of edges) {
+            const [x0, y0] = pts2[a];
+            const [x1, y1] = pts2[b];
+            const depth = (pts3[a][2] + pts3[b][2]) / 2;
+            drawLine(grid, fg, x0, y0, x1, y1, edgeChar(x0, y0, x1, y1), depth);
+        }
+
+        for (let i = 0; i < 16; i++) {
+            const [x, y] = pts2[i];
+            const z = pts3[i][2];
+            if (x >= 0 && x < W && y >= 0 && y < H) {
+                grid[y][x] = vertChar(z);
+                fg[y][x] = Infinity;
+            }
+        }
+
+        el.textContent = grid.map((r) => r.join("")).join("\n");
+
+        axw += 0.009;
+        azw += 0.013;
+        axy += 0.004;
+
+        requestAnimationFrame(frame);
+    }
+
+    frame();
+</script>
