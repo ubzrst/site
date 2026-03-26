@@ -63,7 +63,7 @@ The agent calls `catalog_tool` to identify which datasets are relevant, then `qu
 
 Natural language in, governed structured data out, audit trail on every interaction. The agent isn't making anything up. It called real endpoints and returned what the privacy layer allowed through.
 
-# what six hours taught us
+# what those six hours taught us
 The code was the easy part. The hard part was the first two hours, when we were building the wrong thing. V1 and V2 treated the problem as a connectivity problem. Once we understood it was fundamentally a trust problem, the architecture almost designed itself. You need a catalog so departments know what data exists. You need a privacy layer so they feel safe registering it. You need an audit log so the whole arrangement is politically credible. Everything else followed from that.
 
 The tech stack, Python, FastAPI, SQLite, LangGraph, Claude, React, is nothing exotic. What made the project interesting was one constraint we imposed on ourselves: every surface in the system runs on top of the same governance layer, with no exceptions. That one decision made the rest of it coherent. And it's probably the only version of this idea that would actually work in a real city.
