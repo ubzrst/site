@@ -5,13 +5,13 @@ import favicons from "astro-favicons";
 
 // https://astro.build/config
 export default defineConfig({
-    site: 'https://ubzrst.github.io',
+    site: 'https://badheuristic.github.io',
     integrations: [
         mermaid({ theme: 'default', autoTheme: true }),
         favicons({
             input: "./src/favicon.png",
-            name: "ubzrst",
-            short_name: "ubzrst",
+            name: "badheuristic",
+            short_name: "badheuristic",
         }),
     ],
 });
